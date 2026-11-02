@@ -133,3 +133,7 @@ The application should log all user requests to CloudWatch logs. A log entry sho
      1. Refactor at each stage to improve code quality, e.g. DRY, variable naming, redundant debugging code, etc.
 
 [moodle]: https://moodle.setu.ie/mod/assign/view.php?id=4868989
+
+
+Student Name: John Joey Wright
+Student Number: 20105823
