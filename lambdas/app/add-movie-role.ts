@@ -6,6 +6,7 @@ import {
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { actorKey, ddb, movieKey, type Role, tableName, toRole } from "../shared/db";
 import { isResponse, parseJsonObject, response } from "../shared/http";
+import { logRequest } from "../shared/request-logger";
 
 const isPositiveInteger = (value: unknown) =>
   typeof value === "number" && Number.isInteger(value) && value > 0;
@@ -90,6 +91,8 @@ const cancellationResponse = (
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  logRequest(event);
+
   const role = parseRole(event);
   if (isResponse(role)) return role;
 
