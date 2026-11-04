@@ -1,4 +1,8 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+  type CancellationReason,
+  TransactionCanceledException,
+} from "@aws-sdk/client-dynamodb";
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { actorKey, ddb, movieKey, type Role, tableName, toRole } from "../shared/db";
 import { isResponse, parseJsonObject, response } from "../shared/http";
@@ -29,6 +33,60 @@ const parseRole = (event: APIGatewayProxyEvent): Role | APIGatewayProxyResult =>
   return toRole(body);
 };
 
+// Writes the role only if the movie and actor exist and the role doesn't yet.
+// The order of TransactItems matches the order of CancellationReasons.
+const addRoleTransaction = (role: Role) =>
+  new TransactWriteCommand({
+    TransactItems: [
+      {
+        ConditionCheck: {
+          TableName: tableName,
+          Key: { PK: movieKey(role.movieId), SK: movieKey(role.movieId) },
+          ConditionExpression: "attribute_exists(PK)",
+        },
+      },
+      {
+        ConditionCheck: {
+          TableName: tableName,
+          Key: { PK: actorKey(role.actorId), SK: actorKey(role.actorId) },
+          ConditionExpression: "attribute_exists(PK)",
+        },
+      },
+      {
+        Put: {
+          TableName: tableName,
+          Item: { PK: movieKey(role.movieId), SK: actorKey(role.actorId), ...role },
+          ConditionExpression: "attribute_not_exists(PK)",
+        },
+      },
+    ],
+  });
+
+const conditionFailed = (reason?: CancellationReason) =>
+  reason?.Code === "ConditionalCheckFailed";
+
+// Maps failed conditions to 404 (movie/actor missing) or 409 (role exists).
+// Returns undefined for any other cancellation, e.g. a transaction conflict.
+const cancellationResponse = (
+  err: TransactionCanceledException,
+  role: Role
+): APIGatewayProxyResult | undefined => {
+  const [movieCheck, actorCheck, rolePut] = err.CancellationReasons ?? [];
+  const missing = [
+    conditionFailed(movieCheck) && `Movie ${role.movieId}`,
+    conditionFailed(actorCheck) && `Actor ${role.actorId}`,
+  ].filter(Boolean);
+  if (missing.length) {
+    return response(404, { message: `${missing.join(" and ")} not found` });
+  }
+  if (conditionFailed(rolePut)) {
+    return response(409, {
+      message: `Actor ${role.actorId} already has a role in movie ${role.movieId}`,
+    });
+  }
+  return undefined;
+};
+
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -36,9 +94,13 @@ export const handler = async (
   if (isResponse(role)) return role;
 
   try {
-    //  TOD∏O - Add role if its IDs are valid
-    return response(201, { message: "Role added", data: role });
+    await ddb.send(addRoleTransaction(role));
+    return response(201, { data: role });
   } catch (err) {
+    if (err instanceof TransactionCanceledException) {
+      const failure = cancellationResponse(err, role);
+      if (failure) return failure;
+    }
     console.error("DynamoDB error:", err);
     return response(500, {
       message: "Internal server error",
