@@ -88,6 +88,25 @@ export class AppApiStack extends cdk.Stack {
       },
     });
 
+    // JSON bodies for the errors API Gateway returns itself, before any lambda runs.
+    const jsonMessage = (message: string) => ({ 'application/json': JSON.stringify({ message }) });
+    api.addGatewayResponse('UnauthorizedResponse', {
+      type: apig.ResponseType.UNAUTHORIZED,
+      templates: jsonMessage('Unauthorized: sign in and send the token cookie'),
+    });
+    api.addGatewayResponse('AccessDeniedResponse', {
+      type: apig.ResponseType.ACCESS_DENIED,
+      templates: jsonMessage('Forbidden: the token is invalid or has expired'),
+    });
+    api.addGatewayResponse('InvalidApiKeyResponse', {
+      type: apig.ResponseType.INVALID_API_KEY,
+      templates: jsonMessage('Forbidden: a valid API key is required'),
+    });
+    api.addGatewayResponse('Default4xxResponse', {
+      type: apig.ResponseType.DEFAULT_4XX,
+      templates: { 'application/json': '{"message":$context.error.messageString}' },
+    });
+
     const userAuth: apig.MethodOptions = {
       authorizer: userAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
