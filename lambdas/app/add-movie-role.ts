@@ -9,7 +9,7 @@ import { isResponse, parseJsonObject, response } from "../shared/http";
 import { logRequest } from "../shared/request-logger";
 
 const isPositiveInteger = (value: unknown) =>
-  typeof value === "number" && Number.isInteger(value) && value > 0;
+  typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const isNonEmptyString = (value: unknown) =>
   typeof value === "string" && value.trim() !== "";
 
