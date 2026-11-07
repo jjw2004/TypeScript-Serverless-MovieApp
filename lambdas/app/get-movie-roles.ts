@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import {
   actorKey,
   ddb,
@@ -34,7 +34,6 @@ export const handler = async (
         TableName: tableName,
         KeyConditionExpression: "PK = :pk",
         ExpressionAttributeValues: { ":pk": movieKey(movieId) },
-        // ExclusiveStartKey: lastKey,
       })
     );
 
