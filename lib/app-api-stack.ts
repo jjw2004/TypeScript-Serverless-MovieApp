@@ -102,6 +102,12 @@ export class AppApiStack extends cdk.Stack {
       type: apig.ResponseType.INVALID_API_KEY,
       templates: jsonMessage('Forbidden: a valid API key is required'),
     });
+    // API Gateway reports a path or method with no route as a missing token.
+    api.addGatewayResponse('NotFoundResponse', {
+      type: apig.ResponseType.MISSING_AUTHENTICATION_TOKEN,
+      statusCode: '404',
+      templates: jsonMessage('Not found: no route matches this method and path'),
+    });
     api.addGatewayResponse('Default4xxResponse', {
       type: apig.ResponseType.DEFAULT_4XX,
       templates: { 'application/json': '{"message":$context.error.messageString}' },
