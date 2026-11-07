@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { actorKey, ddb, movieKey, type Role, tableName, toRole } from "../shared/db";
-import { isResponse, parseJsonObject, response } from "../shared/http";
+import { isResponse, parseJsonObject, response, serverError } from "../shared/http";
 import { logRequest } from "../shared/request-logger";
 
 const isPositiveInteger = (value: unknown) =>
@@ -104,7 +104,6 @@ export const handler = async (
       const failure = cancellationResponse(err, role);
       if (failure) return failure;
     }
-    console.error("DynamoDB error:", err);
-    return response(500, { message: "Internal server error" });
+    return serverError(err);
   }
 };

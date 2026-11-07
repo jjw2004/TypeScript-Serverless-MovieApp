@@ -12,6 +12,12 @@ export const response = (
 
 export const isResponse = (value: object): value is APIGatewayProxyResult => 'statusCode' in value;
 
+// Logs the error to CloudWatch and returns a generic 500, so no details reach the client.
+export const serverError = (err: unknown): APIGatewayProxyResult => {
+  console.error('DynamoDB error:', err);
+  return response(500, { message: 'Internal server error' });
+};
+
 // Parses a JSON object request body, or returns a 400 response.
 export const parseJsonObject = (
   event: APIGatewayProxyEvent,

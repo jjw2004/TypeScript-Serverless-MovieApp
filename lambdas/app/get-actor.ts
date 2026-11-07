@@ -9,7 +9,7 @@ import {
   toActor,
   toRole,
 } from "../shared/db";
-import { response } from "../shared/http";
+import { response, serverError } from "../shared/http";
 import { logRequest } from "../shared/request-logger";
 
 const getRoleItem = async (movieId: number, actorId: number) => {
@@ -60,7 +60,6 @@ export const handler = async (
     const { roleName, roleDescription } = toRole(roleItem);
     return response(200, { data: { ...actor, roleName, roleDescription } });
   } catch (err) {
-    console.error("DynamoDB error:", err);
-    return response(500, { message: "Internal server error" });
+    return serverError(err);
   }
 };
