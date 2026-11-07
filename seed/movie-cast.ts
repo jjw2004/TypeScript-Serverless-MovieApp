@@ -1,4 +1,4 @@
-import { type Actor, actorKey, type Movie, movieKey, type Role } from '../lambdas/shared/model';
+import { type Actor, actorKey, type Movie, movieKey, type Role, toRoleItem } from '../lambdas/shared/model';
 
 // Sample data loaded into the table when the App API stack is first deployed.
 // Dates are DD-MM-YYYY, as in the specification.
@@ -119,5 +119,5 @@ export const roles: Role[] = [
 export const seedItems = (): Record<string, unknown>[] => [
   ...movies.map((m) => ({ PK: movieKey(m.movieId), SK: movieKey(m.movieId), ...m })),
   ...actors.map((a) => ({ PK: actorKey(a.actorId), SK: actorKey(a.actorId), ...a })),
-  ...roles.map((r) => ({ PK: movieKey(r.movieId), SK: actorKey(r.actorId), ...r })),
+  ...roles.map(toRoleItem),
 ];

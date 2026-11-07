@@ -41,7 +41,13 @@ export const toRole = ({ movieId, actorId, roleName, roleDescription }: Record<s
   roleDescription,
 });
 
-export const toActor = ({ actorId, name, dateOfBirth, bio }: Record<string, any>): Actor => ({
+export const toRoleItem = (role: Role) => ({
+  PK: movieKey(role.movieId),
+  SK: actorKey(role.actorId),
+  ...role,
+});
+
+export const toActor =({ actorId, name, dateOfBirth, bio }: Record<string, any>): Actor => ({
   actorId,
   name,
   dateOfBirth,

@@ -4,7 +4,15 @@ import {
   TransactionCanceledException,
 } from "@aws-sdk/client-dynamodb";
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
-import { actorKey, ddb, movieKey, type Role, tableName, toRole } from "../shared/db";
+import {
+  actorKey,
+  ddb,
+  movieKey,
+  type Role,
+  tableName,
+  toRole,
+  toRoleItem,
+} from "../shared/db";
 import { isResponse, parseJsonObject, response, serverError } from "../shared/http";
 import { logRequest } from "../shared/request-logger";
 
@@ -56,7 +64,7 @@ const addRoleTransaction = (role: Role) =>
       {
         Put: {
           TableName: tableName,
-          Item: { PK: movieKey(role.movieId), SK: actorKey(role.actorId), ...role },
+          Item: toRoleItem(role),
           ConditionExpression: "attribute_not_exists(PK)",
         },
       },
